@@ -88,7 +88,12 @@ ES2023의 원본 불변 메서드 세트:
 | `arr[i] = x` | `arr.with(i, x)` |
 
 - id로 삭제할 때는 `filter`가 한 줄이라 사실상 표준. index를 이미 알면 `toSpliced`.
-- `filter`/`map`/spread는 **얕은 복사**: 배열은 새것이지만 안의 객체는 같은 참조 → 객체 수정이 필요하면 `{ ...t }`로 객체도 새로 만든다.
+- spread는 두 종류: **배열 spread** `[...arr]`, **객체 spread** `{ ...obj }`. 둘 다 **얕은 복사**(한 단계만 새로 만듦).
+- `filter`/`map`/`[...arr]`: 배열은 새것이지만 안의 객체는 같은 참조 → 객체를 바꾸려면 `{ ...t, done: !t.done }`로 객체도 새로 만든다.
+- `{ ...t }`도 마찬가지로 한 단계만 복사 → 객체 안에 객체가 있으면 그 안쪽도 spread 해야 한다.
+  ```ts
+  { ...user, address: { ...user.address, city: "Seoul" } }
+  ```
 
 ### `with`는?
 `arr.with(index, value)` — 해당 index만 `value`로 바꾼 **새 배열**을 반환. 원본은 그대로.

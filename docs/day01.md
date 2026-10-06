@@ -98,6 +98,28 @@ ES2023의 원본 불변 메서드 세트:
 [1, 2, 3].with(5, 9);   // RangeError (범위 밖)
 ```
 
+### `setCount(count + 1)` vs `setCount((c) => c + 1)`
+- `setCount(count + 1)` — **값**을 넘긴다. "다음 값은 (이 렌더링의 count) + 1". 스냅샷 기준.
+- `setCount((c) => c + 1)` — **함수**를 넘긴다. "직전 state를 받아서 +1 해 줘". React가 큐를 처리할 때 직전 결과를 `c`로 넣어준다.
+
+```tsx
+// count = 0 인 렌더링에서
+setCount(count + 1); // 큐: "1로 교체"
+setCount(count + 1); // 큐: "1로 교체"
+// → 1
+
+setCount((c) => c + 1); // 큐: 0 → 1
+setCount((c) => c + 1); // 큐: 1 → 2
+// → 2
+```
+
+updater가 필요한 경우 = **스냅샷이 이미 낡았을 수 있는 경우**
+- 한 핸들러에서 같은 state를 여러 번 업데이트
+- `setTimeout`, `await` 이후, `setInterval` 등 나중에 실행되는 콜백 (클로저가 옛 count를 잡고 있음)
+
+한 번만 바꾸는 일반 이벤트에서는 둘의 결과가 같다. **"이전 값으로 다음 값을 계산"하면 updater가 항상 안전한 선택.**
+(`setTodos((prev) => [...prev, newTodo])`도 같은 원리)
+
 ---
 
 ## 다음에 다시 볼 것

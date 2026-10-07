@@ -1,0 +1,22 @@
+import { CATEGORY_LABEL, type Property } from "../types";
+
+export const ItemDetail = (item: Property) => {
+  return (
+    <section>
+      <h2>{item.title}</h2>
+      <dl>
+        <dt>유형</dt>
+        <dd>{CATEGORY_LABEL[item.category]}</dd>
+        <dt>보증금 / 월세</dt>
+        <dd>
+          {item.deposit.toLocaleString()} / {item.monthlyRent} 만원
+        </dd>
+        <dt>전용면적</dt>
+        <dd>{item.area} m²</dd>
+      </dl>
+      <p>{item.description}</p>
+      <children />
+      {/* 이게 아닌가? */}
+    </section>
+  );
+};

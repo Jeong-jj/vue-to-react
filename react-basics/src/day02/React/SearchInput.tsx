@@ -12,12 +12,13 @@ export const SearchInput = ({ value, updateInput }: Props) => {
     if (inputRef.current) {
       inputRef.current.focus();
     }
-  });
+  }, [inputRef]);
 
   return (
     <div>
       <input
         ref={inputRef}
+        value={value}
         onChange={(e) => updateInput(e.target.value)}
         placeholder="매물명 검색"
       />

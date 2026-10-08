@@ -15,14 +15,15 @@ export const PropertyApp = () => {
   const filteredItems = properties.filter(
     (p) =>
       (category === "all" || p.category === category) &&
-      p.title.includes(keyword),
+      p.title.includes(keyword.trim()),
   );
 
   const selectedItem = properties.find((p) => p.id === selectedId) ?? null;
 
-  useEffect(() => {
+  const selectCategory = (category: Category | "all") => {
+    setCategory(category);
     setSelectedId(null);
-  }, [category]);
+  };
 
   useEscapeKey(() => {
     setSelectedId(null);
@@ -33,7 +34,7 @@ export const PropertyApp = () => {
       <h1>매물 검색</h1>
 
       <SearchInput value={keyword} updateInput={setKeyword} />
-      <CategoryFilter selected={category} onChange={setCategory} />
+      <CategoryFilter selected={category} onChange={selectCategory} />
 
       <p>{filteredItems.length}</p>
 

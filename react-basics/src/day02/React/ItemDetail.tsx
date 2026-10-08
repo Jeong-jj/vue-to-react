@@ -23,7 +23,7 @@ export const ItemDetail = ({ item, children }: Props) => {
       </dl>
       <p>{item.description}</p>
 
-      <>{children}</>
+      {children}
     </section>
   );
 };

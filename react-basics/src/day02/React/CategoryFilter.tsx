@@ -21,7 +21,7 @@ export const CategoryFilter = ({ selected, onChange }: Props) => {
           type="button"
           key={option.value}
           onClick={() => onChange(option.value)}
-          className={selected === option.value ? "selected" : ""}
+          className={selected === option.value ? "selected" : undefined}
         >
           {option.label}
         </button>

@@ -10,7 +10,7 @@ export const ItemCard = ({ item, selected, onClick }: Props) => {
   const priceLabel = `${item.deposit.toLocaleString()} / ${item.monthlyRent}`;
 
   return (
-    <li onClick={onClick} className={selected ? "selected" : ""}>
+    <li onClick={onClick} className={selected ? "selected" : undefined}>
       <strong>{item.title}</strong>
       <span>{CATEGORY_LABEL[item.category]}</span>
       <span>{priceLabel}</span>

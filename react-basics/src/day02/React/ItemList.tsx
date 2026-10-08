@@ -1,11 +1,13 @@
 import type { Property } from "../types";
 import { ItemCard } from "./ItemCard";
 
-export const ItemList = (
-  items: Property[],
-  selectedId: number | null,
-  onSelect: (id: number) => void,
-) => {
+interface Props {
+  items: Property[];
+  selectedId: number | null;
+  onSelect: (id: number) => void;
+}
+
+export const ItemList = ({ items, selectedId, onSelect }: Props) => {
   return (
     <>
       {items.length === 0 ? (
@@ -13,7 +15,6 @@ export const ItemList = (
       ) : (
         <ul>
           {items.map((item) => (
-            /* 무슨 이슈인지 체크 필요, props 전달이 제대로 안됨 */
             <ItemCard
               key={item.id}
               item={item}

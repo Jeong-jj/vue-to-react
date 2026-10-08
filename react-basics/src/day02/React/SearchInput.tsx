@@ -1,9 +1,11 @@
 import { useEffect, useRef } from "react";
 
-export const SearchInput = (
-  required: boolean = true,
-  updateInput: (value: string) => void,
-) => {
+interface Props {
+  value: string;
+  updateInput: (value: string) => void;
+}
+
+export const SearchInput = ({ value, updateInput }: Props) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -19,7 +21,7 @@ export const SearchInput = (
         onChange={(e) => updateInput(e.target.value)}
         placeholder="매물명 검색"
       />
-      {required && (
+      {value && (
         <button type="button" onClick={() => updateInput("")}>
           지우기
         </button>

@@ -1,6 +1,13 @@
+import type { ReactNode } from "react";
 import { CATEGORY_LABEL, type Property } from "../types";
 
-export const ItemDetail = (item: Property) => {
+interface Props {
+  item: Property;
+  children?: ReactNode;
+}
+
+/* children도 props다? type지정이 틀린걸까? */
+export const ItemDetail = ({ item, children }: Props) => {
   return (
     <section>
       <h2>{item.title}</h2>
@@ -15,8 +22,8 @@ export const ItemDetail = (item: Property) => {
         <dd>{item.area} m²</dd>
       </dl>
       <p>{item.description}</p>
-      <children />
-      {/* 이게 아닌가? */}
+
+      <>{children}</>
     </section>
   );
 };

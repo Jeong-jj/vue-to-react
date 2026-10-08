@@ -1,9 +1,11 @@
 import { CATEGORY_LABEL, type Category } from "../types";
 
-export const CategoryFilter = (
-  selected: Category | "all",
-  onChange: (category: Category | "all") => void,
-) => {
+interface Props {
+  selected: Category | "all";
+  onChange: (category: Category | "all") => void;
+}
+
+export const CategoryFilter = ({ selected, onChange }: Props) => {
   const options = [
     { value: "all", label: "전체" },
     ...(Object.keys(CATEGORY_LABEL) as Category[]).map((key) => ({

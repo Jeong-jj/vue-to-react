@@ -2,28 +2,28 @@ import { useEffect, useRef } from "react";
 
 interface Props {
   value: string;
-  updateInput: (value: string) => void;
+  onChange: (value: string) => void;
 }
 
-export const SearchInput = ({ value, updateInput }: Props) => {
+export const SearchInput = ({ value, onChange }: Props) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (inputRef.current) {
       inputRef.current.focus();
     }
-  }, [inputRef]);
+  }, []);
 
   return (
     <div>
       <input
         ref={inputRef}
         value={value}
-        onChange={(e) => updateInput(e.target.value)}
+        onChange={(e) => onChange(e.target.value)}
         placeholder="매물명 검색"
       />
       {value && (
-        <button type="button" onClick={() => updateInput("")}>
+        <button type="button" onClick={() => onChange("")}>
           지우기
         </button>
       )}

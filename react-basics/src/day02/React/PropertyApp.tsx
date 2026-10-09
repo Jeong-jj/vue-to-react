@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { Category } from "../types";
 import { properties } from "../data";
 import { useEscapeKey } from "./useEscapeKey";
@@ -20,8 +20,8 @@ export const PropertyApp = () => {
 
   const selectedItem = properties.find((p) => p.id === selectedId) ?? null;
 
-  const selectCategory = (category: Category | "all") => {
-    setCategory(category);
+  const selectCategory = (cate: Category | "all") => {
+    setCategory(cate);
     setSelectedId(null);
   };
 
@@ -33,7 +33,7 @@ export const PropertyApp = () => {
     <>
       <h1>매물 검색</h1>
 
-      <SearchInput value={keyword} updateInput={setKeyword} />
+      <SearchInput value={keyword} onChange={setKeyword} />
       <CategoryFilter selected={category} onChange={selectCategory} />
 
       <p>{filteredItems.length}</p>

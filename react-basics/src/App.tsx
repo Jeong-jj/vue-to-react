@@ -1,6 +1,8 @@
-import TodoApp from './day01/TodoApp'
+// import TodoApp from "./day01/TodoApp";
+import { PropertyApp } from "./day02/React/PropertyApp";
 
 // 그날 학습할 컴포넌트만 바꿔 끼운다
 export default function App() {
-  return <TodoApp />
+  // return <TodoApp />
+  return <PropertyApp />;
 }

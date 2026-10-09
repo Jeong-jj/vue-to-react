@@ -1,0 +1,59 @@
+import { useState } from "react";
+import type { Category } from "../types";
+import { properties } from "../data";
+import { useEscapeKey } from "./useEscapeKey";
+import { SearchInput } from "./SearchInput";
+import { CategoryFilter } from "./CategoryFilter";
+import { ItemList } from "./ItemList";
+import { ItemDetail } from "./ItemDetail";
+
+export const PropertyApp = () => {
+  const [keyword, setKeyword] = useState("");
+  const [category, setCategory] = useState<Category | "all">("all");
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+
+  const filteredItems = properties.filter(
+    (p) =>
+      (category === "all" || p.category === category) &&
+      p.title.includes(keyword.trim()),
+  );
+
+  const selectedItem = properties.find((p) => p.id === selectedId) ?? null;
+
+  const selectCategory = (cate: Category | "all") => {
+    setCategory(cate);
+    setSelectedId(null);
+  };
+
+  useEscapeKey(() => {
+    setSelectedId(null);
+  });
+
+  return (
+    <>
+      <h1>매물 검색</h1>
+
+      <SearchInput value={keyword} onChange={setKeyword} />
+      <CategoryFilter selected={category} onChange={selectCategory} />
+
+      <p>{filteredItems.length}건</p>
+
+      <ItemList
+        items={filteredItems}
+        selectedId={selectedId}
+        onSelect={setSelectedId}
+      />
+
+      {/* v-if / v-else → 삼항 연산자 */}
+      {selectedItem ? (
+        <ItemDetail item={selectedItem}>
+          <button type="button" onClick={() => setSelectedId(null)}>
+            닫기
+          </button>
+        </ItemDetail>
+      ) : (
+        <p>매물을 선택하세요</p>
+      )}
+    </>
+  );
+};

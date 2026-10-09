@@ -36,7 +36,7 @@ export const PropertyApp = () => {
       <SearchInput value={keyword} onChange={setKeyword} />
       <CategoryFilter selected={category} onChange={selectCategory} />
 
-      <p>{filteredItems.length}</p>
+      <p>{filteredItems.length}건</p>
 
       <ItemList
         items={filteredItems}
@@ -44,12 +44,15 @@ export const PropertyApp = () => {
         onSelect={setSelectedId}
       />
 
-      {selectedItem && (
+      {/* v-if / v-else → 삼항 연산자 */}
+      {selectedItem ? (
         <ItemDetail item={selectedItem}>
           <button type="button" onClick={() => setSelectedId(null)}>
             닫기
           </button>
         </ItemDetail>
+      ) : (
+        <p>매물을 선택하세요</p>
       )}
     </>
   );

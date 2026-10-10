@@ -11,6 +11,7 @@ import { PropertyDetail } from './components/PropertyDetail'
 import { PropertyFilters, type SortOrder } from './components/PropertyFilters'
 import { PropertyList } from './components/PropertyList'
 import { QueryError } from './components/QueryError'
+import { useDelayedFlag } from './hooks/useDelayedFlag'
 import { useFavorites } from './hooks/useFavorites'
 
 export function PropertyApp() {
@@ -23,7 +24,10 @@ export function PropertyApp() {
   const [failMode, setFailModeState] = useState(false)
   const { isFavorite, toggleFavorite } = useFavorites()
   const deleteMutation = useDeletePropertyMutation()
-  const { data, isPending, isError, error, isFetching, refetch } = usePropertiesQuery(category)
+  const { data, isPending, isError, error, isFetching, isPlaceholderData, refetch } =
+    usePropertiesQuery(category)
+  // 유형 변경 후 이전 목록을 보여주는 동안, 300ms를 넘기면 로딩 중임을 알린다
+  const showSwitchingIndicator = useDelayedFlag(isPlaceholderData, 300)
 
   // 검색, 즐겨찾기, 정렬은 API가 지원하지 않으므로 받은 목록에서 렌더링 중에 계산한다
   // filter가 새 배열을 만들기 때문에 sort가 쿼리 캐시 배열을 직접 바꾸지 않는다
@@ -114,6 +118,7 @@ export function PropertyApp() {
           {deleteMutation.isError && (
             <p role="alert">삭제에 실패했습니다: {deleteMutation.error.message}</p>
           )}
+          {showSwitchingIndicator && <p role="status">목록을 불러오는 중...</p>}
           {listContent}
         </section>
         <section style={{ flex: 1 }}>

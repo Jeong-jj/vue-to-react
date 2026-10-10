@@ -8,7 +8,7 @@ import {
   type CategoryFilter,
 } from './api/queries'
 import { PropertyDetail } from './components/PropertyDetail'
-import { PropertyFilters } from './components/PropertyFilters'
+import { PropertyFilters, type SortOrder } from './components/PropertyFilters'
 import { PropertyList } from './components/PropertyList'
 import { QueryError } from './components/QueryError'
 import { useFavorites } from './hooks/useFavorites'
@@ -18,18 +18,26 @@ export function PropertyApp() {
   const [keyword, setKeyword] = useState('')
   const [category, setCategory] = useState<CategoryFilter>('all')
   const [favoritesOnly, setFavoritesOnly] = useState(false)
+  const [sortOrder, setSortOrder] = useState<SortOrder>('default')
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [failMode, setFailModeState] = useState(false)
   const { isFavorite, toggleFavorite } = useFavorites()
   const deleteMutation = useDeletePropertyMutation()
   const { data, isPending, isError, error, isFetching, refetch } = usePropertiesQuery(category)
 
-  // 검색과 즐겨찾기는 API가 지원하지 않으므로 받은 목록에서 렌더링 중에 거른다
+  // 검색, 즐겨찾기, 정렬은 API가 지원하지 않으므로 받은 목록에서 렌더링 중에 계산한다
+  // filter가 새 배열을 만들기 때문에 sort가 쿼리 캐시 배열을 직접 바꾸지 않는다
   const normalizedKeyword = keyword.trim().toLowerCase()
-  const visibleProperties = (data ?? []).filter(
-    (p) =>
-      p.title.toLowerCase().includes(normalizedKeyword) && (!favoritesOnly || isFavorite(p.id)),
-  )
+  const visibleProperties = (data ?? [])
+    .filter(
+      (p) =>
+        p.title.toLowerCase().includes(normalizedKeyword) && (!favoritesOnly || isFavorite(p.id)),
+    )
+    .sort((a, b) => {
+      if (sortOrder === 'rentAsc') return a.monthlyRent - b.monthlyRent
+      if (sortOrder === 'areaDesc') return b.area - a.area
+      return 0
+    })
 
   // setFailMode는 모듈 변수라 렌더링에 반영되지 않으므로 체크 상태는 state로 따로 둔다
   const handleFailModeChange = (on: boolean) => {
@@ -88,9 +96,11 @@ export function PropertyApp() {
             keyword={keyword}
             category={category}
             favoritesOnly={favoritesOnly}
+            sortOrder={sortOrder}
             onKeywordChange={setKeyword}
             onCategoryChange={setCategory}
             onFavoritesOnlyChange={setFavoritesOnly}
+            onSortOrderChange={setSortOrder}
           />
           {deleteMutation.isError && (
             <p role="alert">삭제에 실패했습니다: {deleteMutation.error.message}</p>

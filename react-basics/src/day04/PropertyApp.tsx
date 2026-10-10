@@ -1,14 +1,17 @@
 import { useState } from 'react'
+import { setFailMode } from '../day03/api'
 import { usePropertiesQuery, type CategoryFilter } from './api/queries'
 import { PropertyDetail } from './components/PropertyDetail'
 import { PropertyFilters } from './components/PropertyFilters'
 import { PropertyList } from './components/PropertyList'
+import { QueryError } from './components/QueryError'
 
 export function PropertyApp() {
   const [keyword, setKeyword] = useState('')
   const [category, setCategory] = useState<CategoryFilter>('all')
   const [selectedId, setSelectedId] = useState<number | null>(null)
-  const { data } = usePropertiesQuery(category)
+  const [failMode, setFailModeState] = useState(false)
+  const { data, isPending, isError, error, isFetching, refetch } = usePropertiesQuery(category)
 
   // 검색은 API가 지원하지 않으므로 받은 목록에서 렌더링 중에 거른다
   const normalizedKeyword = keyword.trim().toLowerCase()
@@ -16,9 +19,40 @@ export function PropertyApp() {
     p.title.toLowerCase().includes(normalizedKeyword),
   )
 
+  // setFailMode는 모듈 변수라 렌더링에 반영되지 않으므로 체크 상태는 state로 따로 둔다
+  const handleFailModeChange = (on: boolean) => {
+    setFailMode(on)
+    setFailModeState(on)
+  }
+
+  let listContent
+  if (isPending) {
+    listContent = <p>목록을 불러오는 중...</p>
+  } else if (isError) {
+    listContent = <QueryError error={error} retrying={isFetching} onRetry={() => refetch()} />
+  } else if (visibleProperties.length === 0) {
+    listContent = <p>조건에 맞는 매물이 없습니다.</p>
+  } else {
+    listContent = (
+      <PropertyList
+        properties={visibleProperties}
+        selectedId={selectedId}
+        onSelect={setSelectedId}
+      />
+    )
+  }
+
   return (
     <div>
       <h1>임대 매물</h1>
+      <label>
+        <input
+          type="checkbox"
+          checked={failMode}
+          onChange={(e) => handleFailModeChange(e.target.checked)}
+        />
+        실패 모드 (개발용)
+      </label>
       <div style={{ display: 'flex', gap: 24 }}>
         <section style={{ flex: 1 }}>
           <PropertyFilters
@@ -27,14 +61,14 @@ export function PropertyApp() {
             onKeywordChange={setKeyword}
             onCategoryChange={setCategory}
           />
-          <PropertyList
-            properties={visibleProperties}
-            selectedId={selectedId}
-            onSelect={setSelectedId}
-          />
+          {listContent}
         </section>
         <section style={{ flex: 1 }}>
-          {selectedId != null && <PropertyDetail id={selectedId} />}
+          {selectedId == null ? (
+            <p>매물을 선택하면 상세 정보가 표시됩니다.</p>
+          ) : (
+            <PropertyDetail id={selectedId} />
+          )}
         </section>
       </div>
     </div>

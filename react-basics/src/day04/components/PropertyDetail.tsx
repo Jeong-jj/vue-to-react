@@ -1,14 +1,16 @@
 import { CATEGORY_LABEL } from '../../day02/types'
 import { usePropertyQuery } from '../api/queries'
+import { QueryError } from './QueryError'
 
 interface Props {
   id: number
 }
 
 export function PropertyDetail({ id }: Props) {
-  const { data: property } = usePropertyQuery(id)
+  const { data: property, isPending, isError, error, isFetching, refetch } = usePropertyQuery(id)
 
-  if (!property) return null
+  if (isPending) return <p>상세 정보를 불러오는 중...</p>
+  if (isError) return <QueryError error={error} retrying={isFetching} onRetry={() => refetch()} />
 
   return (
     <article>

@@ -47,6 +47,20 @@
   - `elapsed`만 반환하면 ①에서 로딩 문구가 한 번 더 그려진다.
   - `active && elapsed`로 반환하면 ①에서 바로 false가 된다.
   - **Day 2와 같은 원리다.** effect는 렌더링 후에 실행되므로 그 사이의 렌더링은 이전 state를 본다.
+- 실험: `react-basics/src/day04/experiments/DelayedFlagLog.tsx` — 콘솔에서 render / effect / cleanup 순서와 빨간 줄(①)을 확인한다.
+
+#### 한 번의 state 변경이 처리되는 순서
+```
+setState
+→ ① render     컴포넌트 함수 실행 (JSX 계산). 화면은 아직 그대로
+→ ② commit     DOM에 반영
+→ ③ paint      브라우저가 화면에 그림
+→ ④ cleanup    "이전" 렌더링의 effect가 반환한 함수 (deps가 바뀐 effect만)
+→ ⑤ effect     "이번" 렌더링의 effect
+   └ 여기서 setState를 하면 ①부터 다시
+```
+- cleanup은 unmount 때만 실행되는 게 아니다. **deps가 바뀌어 effect를 다시 실행하기 직전에도** 실행된다.
+- Vue와 비교: Vue의 `watch`(기본)는 ① 전에, `onUpdated`는 ② 후에 실행된다. React effect는 ③ 후라서 ①의 렌더링은 항상 이전 state를 본다.
 
 ### 3. `useFavorites`의 localStorage 저장 effect는 Day 2 원칙과 충돌하나?
 - **내 답:** 충돌하는 것 같다.
@@ -62,6 +76,10 @@
   | 주의 | mount 때 읽은 값을 그대로 다시 저장한다 (무해함) | updater(`prev => …`) 안에서 저장하면 안 된다. updater는 순수해야 하고 StrictMode가 두 번 호출한다 |
 
   둘 다 정답이다. 현재 코드가 더 단순하다.
+- 둘 중 무엇을 고를지 정하는 질문: **"이 코드는 왜 실행되는가?"**
+  - "state가 이 값이면 외부도 이 값이어야 하니까" (동기화) → effect. 예: localStorage 저장, `document.title`
+  - "사용자가 이 행동을 했으니까" (사건) → 핸들러. 예: 제출 시 POST, 클릭 로그 전송
+  - localStorage 저장은 두 해석이 다 가능해서 둘 다 정답이다. POST를 effect에 두면 mount나 StrictMode에서 중복 요청이 생긴다.
 
 ### 4. 삭제 후 `lists()`만 무효화하고 `removeQueries(detail(id))`를 하는 이유
 - **내 답:** 열린 상세까지 무효화하지 않으려고. `detail(id)`는 열린 상세가 삭제된 경우에만 갱신하려고.
@@ -75,6 +93,10 @@
 
   - `removeQueries(detail(id))`는 "갱신"이 아니라 **삭제된 매물의 캐시를 버리는 정리 작업**이다. 열려 있었든 아니든 그 id의 데이터는 더 이상 의미가 없다.
   - 열려 있던 상세를 닫는 건 `PropertyApp`의 `onSuccess`에서 `setSelectedId(null)`이 한다.
+- 다시 정리한 내 답: "삭제한 id의 상세 캐시를 지운다" ✅. 처음 답에서 어긋난 단어는 두 개였다.
+  - "열려 있는 상세" → 열려 있는지와 관계없이 **삭제한 id**가 대상이다.
+  - "갱신" → remove는 요청하지 않는다. **제거**다.
+  - "상세 전체가 아니라 그 id만"이라는 범위 설명은 맞다.
 
 ### 5. `.filter(...).sort(...)`에서 `filter`가 빠지면?
 - **내 답:** 이해가 부족하다 → 아래 설명.
@@ -101,6 +123,16 @@ b === a              // true — 같은 배열
 - 렌더링 중에 **React Query 캐시를 직접 바꾼다**. 같은 쿼리를 쓰는 다른 컴포넌트도 정렬된 순서를 보게 된다.
 - "기본순"으로 돌아가도 원래 순서로 돌아오지 않는다. 캐시가 이미 다시 정렬됐기 때문이다.
 - Day 1의 "state는 직접 바꾸지 않는다"를 어긴 것과 같다. 쿼리 데이터도 불변으로 다뤄야 한다.
+
+#### "기본순"으로 돌려도 왜 원래대로 안 돌아오나
+"기본순"은 정렬하는 게 아니라 **비교 함수가 0을 반환해 아무것도 안 바꾸는 것**이다. 원래 순서는 "API가 준 배열 그대로"에 기대고 있다.
+```
+API 응답(캐시)        [A(50), B(30), C(70)]
+월세 낮은 순 (원본 sort) → 캐시 자체가 [B, A, C]로 바뀜
+기본순 (return 0)       → [B, A, C]를 그대로 둠
+```
+- 원래 순서를 기억하는 복사본이 어디에도 없으니 되돌릴 기준이 없다.
+- 더 나쁜 점: refetch(창 포커스, invalidate)로 캐시가 새 배열로 바뀌면 그때는 원래 순서로 돌아온다. **재현될 때도 있고 안 될 때도 있는 버그**가 된다.
 
 #### 해결: 복사본을 반환하는 메서드 (ES2023)
 ```ts
@@ -138,6 +170,7 @@ data.toSorted((a, b) => a.monthlyRent - b.monthlyRent)  // 새 배열, 원본 �
 
 ## 다음에 다시 볼 것
 - [ ] effect는 렌더링 **후** 실행된다 → 그 사이 렌더링은 이전 state를 본다 (Day 2, Day 4 2번)
-- [ ] effect 금지는 "state → state" 동기화에만 해당한다. "state → 외부"는 effect의 원래 용도다
+- [ ] render → commit → paint → cleanup(이전) → effect(이번) 순서
+- [ ] effect 금지는 "state → state" 동기화에만 해당한다. "state → 외부"는 effect의 원래 용도다 (동기화면 effect, 사건이면 핸들러)
 - [ ] invalidate(다시 요청) vs remove(캐시에서 버림)
 - [ ] `sort`/`reverse`/`splice`는 원본을 바꾼다 → `toSorted`/`toReversed`/`toSpliced`

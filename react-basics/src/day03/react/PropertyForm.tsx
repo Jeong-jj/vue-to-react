@@ -13,24 +13,21 @@ export const PropertyForm = ({
   onSubmit,
   errorMessage = "",
 }: Props) => {
-  const [form, setForm] = useState<PropertyInput>({
-    title: "",
-    category: "apartment",
-    deposit: 0,
-    monthlyRent: 0,
-    area: 0,
-    description: "",
-  });
-
-  const reset = () => {
-    setForm({
+  const initialForm = (): PropertyInput => {
+    return {
       title: "",
       category: "apartment",
       deposit: 0,
       monthlyRent: 0,
       area: 0,
       description: "",
-    });
+    };
+  };
+
+  const [form, setForm] = useState<PropertyInput>(initialForm());
+
+  const reset = () => {
+    setForm(initialForm());
   };
 
   const submitFn = (event: React.SubmitEvent) => {

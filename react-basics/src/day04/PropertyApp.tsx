@@ -48,6 +48,14 @@ export function PropertyApp() {
     if (on) queryClient.invalidateQueries({ queryKey: propertyKeys.all })
   }
 
+  // 검색어, 유형, 즐겨찾기만 보기, 정렬을 기본값으로 되돌린다 (선택한 매물은 유지)
+  const handleResetFilters = () => {
+    setKeyword('')
+    setCategory('all')
+    setFavoritesOnly(false)
+    setSortOrder('default')
+  }
+
   const handleDelete = (id: number) => {
     if (!window.confirm('이 매물을 삭제할까요?')) return
     deleteMutation.mutate(id, {
@@ -101,6 +109,7 @@ export function PropertyApp() {
             onCategoryChange={setCategory}
             onFavoritesOnlyChange={setFavoritesOnly}
             onSortOrderChange={setSortOrder}
+            onReset={handleResetFilters}
           />
           {deleteMutation.isError && (
             <p role="alert">삭제에 실패했습니다: {deleteMutation.error.message}</p>

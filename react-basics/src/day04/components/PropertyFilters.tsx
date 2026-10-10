@@ -26,6 +26,7 @@ interface Props {
   onCategoryChange: (category: CategoryFilter) => void
   onFavoritesOnlyChange: (favoritesOnly: boolean) => void
   onSortOrderChange: (sortOrder: SortOrder) => void
+  onReset: () => void
 }
 
 export function PropertyFilters({
@@ -37,6 +38,7 @@ export function PropertyFilters({
   onCategoryChange,
   onFavoritesOnlyChange,
   onSortOrderChange,
+  onReset,
 }: Props) {
   return (
     <div>
@@ -72,6 +74,9 @@ export function PropertyFilters({
           </option>
         ))}
       </select>
+      <button type="button" onClick={onReset}>
+        조건 초기화
+      </button>
     </div>
   )
 }

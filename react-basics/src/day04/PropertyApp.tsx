@@ -1,12 +1,14 @@
 import { useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { setFailMode } from '../day03/api'
-import { usePropertiesQuery, type CategoryFilter } from './api/queries'
+import { propertyKeys, usePropertiesQuery, type CategoryFilter } from './api/queries'
 import { PropertyDetail } from './components/PropertyDetail'
 import { PropertyFilters } from './components/PropertyFilters'
 import { PropertyList } from './components/PropertyList'
 import { QueryError } from './components/QueryError'
 
 export function PropertyApp() {
+  const queryClient = useQueryClient()
   const [keyword, setKeyword] = useState('')
   const [category, setCategory] = useState<CategoryFilter>('all')
   const [selectedId, setSelectedId] = useState<number | null>(null)
@@ -23,6 +25,9 @@ export function PropertyApp() {
   const handleFailModeChange = (on: boolean) => {
     setFailMode(on)
     setFailModeState(on)
+    // 캐시가 있으면 다시 요청하지 않아 실패가 드러나지 않으므로, 켤 때 무효화해 재요청시킨다
+    // 끌 때는 무효화하지 않고 "다시 시도"로 복구한다
+    if (on) queryClient.invalidateQueries({ queryKey: propertyKeys.all })
   }
 
   let listContent

@@ -12,15 +12,17 @@ export function PropertyApp() {
   const queryClient = useQueryClient()
   const [keyword, setKeyword] = useState('')
   const [category, setCategory] = useState<CategoryFilter>('all')
+  const [favoritesOnly, setFavoritesOnly] = useState(false)
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [failMode, setFailModeState] = useState(false)
   const { isFavorite, toggleFavorite } = useFavorites()
   const { data, isPending, isError, error, isFetching, refetch } = usePropertiesQuery(category)
 
-  // 검색은 API가 지원하지 않으므로 받은 목록에서 렌더링 중에 거른다
+  // 검색과 즐겨찾기는 API가 지원하지 않으므로 받은 목록에서 렌더링 중에 거른다
   const normalizedKeyword = keyword.trim().toLowerCase()
-  const visibleProperties = (data ?? []).filter((p) =>
-    p.title.toLowerCase().includes(normalizedKeyword),
+  const visibleProperties = (data ?? []).filter(
+    (p) =>
+      p.title.toLowerCase().includes(normalizedKeyword) && (!favoritesOnly || isFavorite(p.id)),
   )
 
   // setFailMode는 모듈 변수라 렌더링에 반영되지 않으므로 체크 상태는 state로 따로 둔다
@@ -67,8 +69,10 @@ export function PropertyApp() {
           <PropertyFilters
             keyword={keyword}
             category={category}
+            favoritesOnly={favoritesOnly}
             onKeywordChange={setKeyword}
             onCategoryChange={setCategory}
+            onFavoritesOnlyChange={setFavoritesOnly}
           />
           {listContent}
         </section>

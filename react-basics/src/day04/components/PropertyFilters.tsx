@@ -12,11 +12,20 @@ const CATEGORY_OPTIONS: { value: CategoryFilter; label: string }[] = [
 interface Props {
   keyword: string
   category: CategoryFilter
+  favoritesOnly: boolean
   onKeywordChange: (keyword: string) => void
   onCategoryChange: (category: CategoryFilter) => void
+  onFavoritesOnlyChange: (favoritesOnly: boolean) => void
 }
 
-export function PropertyFilters({ keyword, category, onKeywordChange, onCategoryChange }: Props) {
+export function PropertyFilters({
+  keyword,
+  category,
+  favoritesOnly,
+  onKeywordChange,
+  onCategoryChange,
+  onFavoritesOnlyChange,
+}: Props) {
   return (
     <div>
       <input
@@ -36,6 +45,14 @@ export function PropertyFilters({ keyword, category, onKeywordChange, onCategory
           {option.label}
         </label>
       ))}
+      <label>
+        <input
+          type="checkbox"
+          checked={favoritesOnly}
+          onChange={(e) => onFavoritesOnlyChange(e.target.checked)}
+        />
+        즐겨찾기만 보기
+      </label>
     </div>
   )
 }

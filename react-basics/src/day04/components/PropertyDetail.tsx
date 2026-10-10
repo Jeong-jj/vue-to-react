@@ -1,12 +1,15 @@
 import { CATEGORY_LABEL } from '../../day02/types'
 import { usePropertyQuery } from '../api/queries'
+import { FavoriteButton } from './FavoriteButton'
 import { QueryError } from './QueryError'
 
 interface Props {
   id: number
+  favorite: boolean
+  onToggleFavorite: (id: number) => void
 }
 
-export function PropertyDetail({ id }: Props) {
+export function PropertyDetail({ id, favorite, onToggleFavorite }: Props) {
   const { data: property, isPending, isError, error, isFetching, refetch } = usePropertyQuery(id)
 
   if (isPending) return <p>상세 정보를 불러오는 중...</p>
@@ -15,6 +18,7 @@ export function PropertyDetail({ id }: Props) {
   return (
     <article>
       <h2>{property.title}</h2>
+      <FavoriteButton active={favorite} onToggle={() => onToggleFavorite(property.id)} />
       <dl>
         <dt>유형</dt>
         <dd>{CATEGORY_LABEL[property.category]}</dd>

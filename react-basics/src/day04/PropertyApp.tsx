@@ -6,6 +6,7 @@ import { PropertyDetail } from './components/PropertyDetail'
 import { PropertyFilters } from './components/PropertyFilters'
 import { PropertyList } from './components/PropertyList'
 import { QueryError } from './components/QueryError'
+import { useFavorites } from './hooks/useFavorites'
 
 export function PropertyApp() {
   const queryClient = useQueryClient()
@@ -13,6 +14,7 @@ export function PropertyApp() {
   const [category, setCategory] = useState<CategoryFilter>('all')
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [failMode, setFailModeState] = useState(false)
+  const { isFavorite, toggleFavorite } = useFavorites()
   const { data, isPending, isError, error, isFetching, refetch } = usePropertiesQuery(category)
 
   // 검색은 API가 지원하지 않으므로 받은 목록에서 렌더링 중에 거른다
@@ -42,7 +44,9 @@ export function PropertyApp() {
       <PropertyList
         properties={visibleProperties}
         selectedId={selectedId}
+        isFavorite={isFavorite}
         onSelect={setSelectedId}
+        onToggleFavorite={toggleFavorite}
       />
     )
   }
@@ -72,7 +76,11 @@ export function PropertyApp() {
           {selectedId == null ? (
             <p>매물을 선택하면 상세 정보가 표시됩니다.</p>
           ) : (
-            <PropertyDetail id={selectedId} />
+            <PropertyDetail
+              id={selectedId}
+              favorite={isFavorite(selectedId)}
+              onToggleFavorite={toggleFavorite}
+            />
           )}
         </section>
       </div>

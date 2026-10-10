@@ -112,7 +112,7 @@ export const PropertyCrudApp = () => {
               </p>
               <p>{detail.description}</p>
             </div>
-          ) : undefined}
+          ) : null}
           <button type="button" onClick={() => setSelectedId(null)}>
             닫기
           </button>

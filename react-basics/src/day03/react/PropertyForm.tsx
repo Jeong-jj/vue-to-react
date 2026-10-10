@@ -8,23 +8,23 @@ interface Props {
   errorMessage?: string;
 }
 
+// props나 state에 의존하지 않으므로 컴포넌트 밖에 둔다 (렌더링마다 다시 만들 필요 없음)
+const initialForm = (): PropertyInput => ({
+  title: "",
+  category: "apartment",
+  deposit: 0,
+  monthlyRent: 0,
+  area: 0,
+  description: "",
+});
+
 export const PropertyForm = ({
   pending,
   onSubmit,
   errorMessage = "",
 }: Props) => {
-  const initialForm = (): PropertyInput => {
-    return {
-      title: "",
-      category: "apartment",
-      deposit: 0,
-      monthlyRent: 0,
-      area: 0,
-      description: "",
-    };
-  };
-
-  const [form, setForm] = useState<PropertyInput>(initialForm());
+  // initialForm을 그대로 넘기면 첫 렌더링에만 호출된다 (initialForm()은 매 렌더링 호출 후 버려짐)
+  const [form, setForm] = useState<PropertyInput>(initialForm);
 
   const reset = () => {
     setForm(initialForm());
@@ -45,19 +45,19 @@ export const PropertyForm = ({
         placeholder="매물명"
       />
 
+      {/* value가 없으면 reset 후에도 select는 이전 선택을 그대로 보여준다 */}
       <select
+        value={form.category}
         onChange={(e) =>
           setForm({ ...form, category: e.target.value as Category })
         }
       >
-        {
-          // 객체 반복문 이렇게 맞나?
-          Object.entries(CATEGORY_LABEL).map((entry) => (
-            <option key={entry[0]} value={entry[0] as Category}>
-              {entry[1]}
-            </option>
-          ))
-        }
+        {/* Object.entries + 구조분해. key 타입은 string으로 넓어지므로 필요하면 단언 */}
+        {Object.entries(CATEGORY_LABEL).map(([key, label]) => (
+          <option key={key} value={key}>
+            {label}
+          </option>
+        ))}
       </select>
 
       <input

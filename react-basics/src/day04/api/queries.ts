@@ -17,10 +17,9 @@ export function usePropertiesQuery(category: CategoryFilter) {
   })
 }
 
-export function usePropertyQuery(id: number | null) {
+export function usePropertyQuery(id: number) {
   return useQuery({
-    queryKey: propertyKeys.detail(id ?? -1),
-    queryFn: () => fetchProperty(id!),
-    enabled: id != null,
+    queryKey: propertyKeys.detail(id),
+    queryFn: () => fetchProperty(id),
   })
 }

@@ -10,11 +10,11 @@
 
 ## 제공되는 것
 
-| 파일 | 내용 |
-|---|---|
-| `src/day03/api.ts` | 매물 API (`fetchProperties`, `fetchProperty`, `createProperty`, `deleteProperty`, `setFailMode`) |
-| `src/day02/types.ts` | `Property`, `Category`, `CATEGORY_LABEL` |
-| `main.tsx` | `QueryClientProvider` 설정 완료 |
+| 파일                 | 내용                                                                                             |
+| -------------------- | ------------------------------------------------------------------------------------------------ |
+| `src/day03/api.ts`   | 매물 API (`fetchProperties`, `fetchProperty`, `createProperty`, `deleteProperty`, `setFailMode`) |
+| `src/day02/types.ts` | `Property`, `Category`, `CATEGORY_LABEL`                                                         |
+| `main.tsx`           | `QueryClientProvider` 설정 완료                                                                  |
 
 API와 타입은 import해서 사용한다. 컴포넌트, 훅, 화면 코드는 새로 작성한다 (Day 2~3 코드 복사 금지, AI 생성은 허용).
 
@@ -49,15 +49,15 @@ API와 타입은 import해서 사용한다. 컴포넌트, 훅, 화면 코드는 
 
 ## 요구사항 분류 (직접 작성)
 
-| 우선순위 | 요구사항 번호 | 이유 |
-|---|---|---|
-| P0 반드시 구현 | | |
-| P1 시간이 되면 | | |
-| P2 포기 가능 | | |
+| 우선순위       | 요구사항 번호  | 이유                                                       |
+| -------------- | -------------- | ---------------------------------------------------------- |
+| P0 반드시 구현 | 1, 2, 3, 4, 7  | 검색 → 상세 확인의 조회 흐름 MVP. 7은 Query 상태로 저비용  |
+| P1 시간이 되면 | 5, 8, 6, 10    | 과제 설명의 핵심인 즐겨찾기 우선, 삭제는 독립 기능이라 후순위 |
+| P2 포기 가능   | 9, 11          | 목록 편의 기능 (정렬, 조건 초기화)                         |
 
 ## 회고 (종료 후 작성)
 
-- 시작 / 종료 시각:
+- 시작 / 종료 시각: 10/11 00:00 /
 - 구현한 요구사항:
 - 구현하지 못한 요구사항:
 - React 문법 때문에 막힌 부분:

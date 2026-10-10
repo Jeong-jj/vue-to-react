@@ -108,6 +108,27 @@ React Query는 렌더링 때마다 받은 `queryKey`를 이전과 비교해서, 
 - 맞는 방법. 구조분해로 쓰면 읽기 쉽다: `Object.entries(obj).map(([key, label]) => ...)`
 - `Object.entries`의 key 타입은 `string`으로 넓어진다 → 좁은 타입이 필요하면 단언(`as Category`).
 
+### lazy initializer: `useState(initialForm())` vs `useState(initialForm)`
+- `useState(x)`의 `x`는 **첫 렌더링에만 쓰이고** 이후에는 무시된다.
+- 하지만 JS는 함수를 호출하기 전에 **인자를 먼저 계산**한다 → `initialForm()`은 매 렌더링 실행되고 결과는 버려진다.
+- 함수 자체를 넘기면 React가 **첫 렌더링에만** 호출해 준다.
+
+```tsx
+useState(initialForm())        // 매 렌더링: initialForm 실행 → useState가 무시
+useState(initialForm)          // 첫 렌더링만: React가 호출
+useState(() => make(props.x))  // 인자가 필요하면 화살표 함수로 감싼다
+```
+
+| 렌더링 | `useState(initialForm())` | `useState(initialForm)` |
+|---|---|---|
+| 1번째 | 실행 → 초기값으로 사용 | 실행 → 초기값으로 사용 |
+| 2번째~ | **실행 → 버림** | 실행 안 함 |
+
+- 의미가 있는 경우: 초기값 계산이 비쌀 때 (`JSON.parse(localStorage...)`, 큰 배열 생성). 작은 객체는 성능 차이가 거의 없지만 습관으로 들여두면 좋다.
+- Vue엔 이 개념이 없다: `setup()`이 한 번만 실행되므로 `ref(initialForm())`도 한 번만 호출된다.
+- 주의 ① **함수 자체를 state로** 저장하려면 `useState(() => fn)`. `useState(fn)`은 초기화 함수로 해석된다. (`setState(fn)`이 updater로 해석되는 것과 같은 규칙)
+- 주의 ② 초기값은 mount 때 한 번만 쓰인다 → `useState(props.x)`는 나중에 `props.x`가 바뀌어도 따라가지 않는다. 다시 초기화하려면 `key`를 바꿔 새로 mount.
+
 ---
 
 ## Feedback에서 고친 것

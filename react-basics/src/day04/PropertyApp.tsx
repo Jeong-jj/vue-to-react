@@ -125,11 +125,17 @@ export function PropertyApp() {
           {selectedId == null ? (
             <p>매물을 선택하면 상세 정보가 표시됩니다.</p>
           ) : (
-            <PropertyDetail
-              id={selectedId}
-              favorite={isFavorite(selectedId)}
-              onToggleFavorite={toggleFavorite}
-            />
+            <>
+              {/* 로딩, 에러 상태에서도 닫을 수 있도록 상세 분기 밖에 둔다 */}
+              <button type="button" onClick={() => setSelectedId(null)}>
+                닫기
+              </button>
+              <PropertyDetail
+                id={selectedId}
+                favorite={isFavorite(selectedId)}
+                onToggleFavorite={toggleFavorite}
+              />
+            </>
           )}
         </section>
       </div>

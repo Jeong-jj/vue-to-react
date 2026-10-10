@@ -1,7 +1,12 @@
 import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { setFailMode } from '../day03/api'
-import { propertyKeys, usePropertiesQuery, type CategoryFilter } from './api/queries'
+import {
+  propertyKeys,
+  useDeletePropertyMutation,
+  usePropertiesQuery,
+  type CategoryFilter,
+} from './api/queries'
 import { PropertyDetail } from './components/PropertyDetail'
 import { PropertyFilters } from './components/PropertyFilters'
 import { PropertyList } from './components/PropertyList'
@@ -16,6 +21,7 @@ export function PropertyApp() {
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [failMode, setFailModeState] = useState(false)
   const { isFavorite, toggleFavorite } = useFavorites()
+  const deleteMutation = useDeletePropertyMutation()
   const { data, isPending, isError, error, isFetching, refetch } = usePropertiesQuery(category)
 
   // 검색과 즐겨찾기는 API가 지원하지 않으므로 받은 목록에서 렌더링 중에 거른다
@@ -34,6 +40,16 @@ export function PropertyApp() {
     if (on) queryClient.invalidateQueries({ queryKey: propertyKeys.all })
   }
 
+  const handleDelete = (id: number) => {
+    if (!window.confirm('이 매물을 삭제할까요?')) return
+    deleteMutation.mutate(id, {
+      onSuccess: () => {
+        // 삭제한 매물이 선택돼 있었다면 상세를 닫는다
+        setSelectedId((prev) => (prev === id ? null : prev))
+      },
+    })
+  }
+
   let listContent
   if (isPending) {
     listContent = <p>목록을 불러오는 중...</p>
@@ -46,9 +62,11 @@ export function PropertyApp() {
       <PropertyList
         properties={visibleProperties}
         selectedId={selectedId}
+        deletingId={deleteMutation.isPending ? deleteMutation.variables : null}
         isFavorite={isFavorite}
         onSelect={setSelectedId}
         onToggleFavorite={toggleFavorite}
+        onDelete={handleDelete}
       />
     )
   }
@@ -74,6 +92,9 @@ export function PropertyApp() {
             onCategoryChange={setCategory}
             onFavoritesOnlyChange={setFavoritesOnly}
           />
+          {deleteMutation.isError && (
+            <p role="alert">삭제에 실패했습니다: {deleteMutation.error.message}</p>
+          )}
           {listContent}
         </section>
         <section style={{ flex: 1 }}>

@@ -5,11 +5,21 @@ interface Props {
   property: Property
   selected: boolean
   favorite: boolean
+  deleting: boolean
   onSelect: (id: number) => void
   onToggleFavorite: (id: number) => void
+  onDelete: (id: number) => void
 }
 
-export function PropertyItem({ property, selected, favorite, onSelect, onToggleFavorite }: Props) {
+export function PropertyItem({
+  property,
+  selected,
+  favorite,
+  deleting,
+  onSelect,
+  onToggleFavorite,
+  onDelete,
+}: Props) {
   return (
     <li>
       <button type="button" onClick={() => onSelect(property.id)} aria-pressed={selected}>
@@ -18,6 +28,9 @@ export function PropertyItem({ property, selected, favorite, onSelect, onToggleF
         {property.deposit} / 월세 {property.monthlyRent} (만원)
       </button>
       <FavoriteButton active={favorite} onToggle={() => onToggleFavorite(property.id)} />
+      <button type="button" onClick={() => onDelete(property.id)} disabled={deleting}>
+        {deleting ? '삭제 중...' : '삭제'}
+      </button>
     </li>
   )
 }

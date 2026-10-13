@@ -57,7 +57,7 @@ src/app/
         └── not-found.tsx
 ```
 
-1. **layout.tsx**: `lang="ko"`, `metadata.title`, 헤더에 홈과 매물 목록 `Link`
+1. **layout.tsx**: `lang="ko"`, `metadata.title`(브라우저 탭 제목. Vue SPA에서 `index.html`의 `<title>`에 해당, 서비스명을 넣는다), 헤더에 홈과 매물 목록 `Link`
 2. **page.tsx (/)**: 소개 문구와 `/properties`로 가는 `Link`
 3. **properties/page.tsx**
    - `async` 함수로 만들고 `searchParams`에서 `category`를 꺼낸다
@@ -69,8 +69,10 @@ src/app/
    - 매물이 없으면 `notFound()` (`next/navigation`) → 같은 폴더의 `not-found.tsx`가 보인다
    - 목록으로 돌아가는 `Link`
 5. **loading.tsx / error.tsx / not-found.tsx**
-   - `error.tsx`는 첫 줄에 `"use client"`가 **반드시** 필요하다. props(`error`, `reset`)는 공식 문서에서 확인한다
+   - `error.tsx`는 첫 줄에 `"use client"`가 **반드시** 필요하다. props는 `error`, `retry`다. 서버 데이터를 다시 요청하려면 `retry`를 쓴다 (`reset`은 다시 요청하지 않는다)
+   - 버전별 API는 설치된 문서가 가장 정확하다: `node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/error.md`
    - error 화면 확인: 목록 page 안에서 잠깐 `throw new Error('테스트')`를 넣었다가 지운다
+   - not-found 화면 확인: 없는 id로 직접 접속한다 (`/properties/999`)
 
 ### Cache Components 주의 (Next 16 기본값)
 

@@ -1,4 +1,4 @@
-# Day 3 — React + TypeScript + TanStack Query
+# Day 3 - React + TypeScript + TanStack Query
 
 > 2026-10-09 ~ 10-10 · 실습: `react-basics/src/day03/` (`vue/` → `react/`)
 > mock API: `react-basics/src/day03/api.ts` (Day 4에서도 사용)
@@ -45,7 +45,7 @@ React Query는 렌더링 때마다 받은 `queryKey`를 이전과 비교해서, 
 
 ---
 
-## 복습 질문 — 내 답과 보완
+## 복습 질문 - 내 답과 보완
 
 ### 1. Vue는 `Ref`/`computed`가 필요한데 React는 왜 필요 없나?
 - **내 답:** Vue는 반응형 변수로 알려줘야 하고, React는 state가 하위까지 리렌더링시키므로 필요 없다.
@@ -88,7 +88,7 @@ React Query는 렌더링 때마다 받은 `queryKey`를 이전과 비교해서, 
 ### `QueryClientProvider`는 표준인가?
 - React Query에서 **필수**. 없으면 "No QueryClient set" 에러.
 - React 생태계의 공통 패턴: 앱 전체에 공유할 것은 **Context Provider로 트리를 감싼다** (Vue `provide/inject`에 해당). 처음 보는 프로젝트는 진입 파일의 Provider 목록만 봐도 쓰는 라이브러리를 알 수 있다.
-- `queryClient`는 컴포넌트 밖(모듈 최상단)에서 생성. 컴포넌트 안에서 만들면 렌더링마다 새로 생겨 캐시가 사라진다. (Next.js에서는 `useState(() => new QueryClient())` 패턴 — Day 5~6)
+- `queryClient`는 컴포넌트 밖(모듈 최상단)에서 생성. 컴포넌트 안에서 만들면 렌더링마다 새로 생겨 캐시가 사라진다. (Next.js에서는 `useState(() => new QueryClient())` 패턴 - Day 5~6)
 
 ### `emit('submit', input, reset)` 구조는 React에서도 최선인가?
 - **내 생각:** submit 함수에서 바로 reset하기보다, 콜백으로 넘겨서 성공했을 때 reset하는 게 흐름상 맞다.
@@ -132,9 +132,9 @@ useState(() => make(props.x))  // 인자가 필요하면 화살표 함수로 감
 ---
 
 ## Feedback에서 고친 것
-- `<select>`에 `value={form.category}` 추가 — 없으면 reset 후에도 이전 선택이 보임 (Day 2 지우기 버그와 같은 원인)
-- `useState(initialForm())` → `useState(initialForm)` — 함수를 넘기면 첫 렌더링에만 호출 (lazy initializer)
-- `initialForm`을 컴포넌트 밖으로 이동 — props/state에 의존하지 않음
+- `<select>`에 `value={form.category}` 추가 - 없으면 reset 후에도 이전 선택이 보임 (Day 2 지우기 버그와 같은 원인)
+- `useState(initialForm())` → `useState(initialForm)` - 함수를 넘기면 첫 렌더링에만 호출 (lazy initializer)
+- `initialForm`을 컴포넌트 밖으로 이동 - props/state에 의존하지 않음
 - JSX에서 "아무것도 안 그림"은 `undefined`보다 `null`이 관례
 
 ---

@@ -1,4 +1,4 @@
-## Day N — 주제
+## Day N - 주제
 
 > 학습 기록: `docs/dayNN.md`
 

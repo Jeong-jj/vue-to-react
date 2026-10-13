@@ -1,4 +1,4 @@
-# Day 2 — Props / Form / 컴포넌트 설계 / Hooks
+# Day 2 - Props / Form / 컴포넌트 설계 / Hooks
 
 > 2026-10-07 ~ 10-09 · 실습: `react-basics/src/day02/` (`vue/` → `React/`)
 > 실험: `react-basics/src/day02/experiments/WatchVsHandler.tsx`
@@ -89,7 +89,7 @@ mount 시에도 A의 effect는 실행된다 (StrictMode라 2번).
 
 ---
 
-## 복습 질문 — 내 답과 보완
+## 복습 질문 - 내 답과 보완
 
 ### 1. state는 몇 개, 어디에, 왜?
 - **내 답:** 3개, `PropertyApp`. 최상단 부모에서 관리하고 props로 내려준다.

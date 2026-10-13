@@ -1,4 +1,4 @@
-# Day 4 — 미니 과제 (60분, AI 사용)
+# Day 4 - 미니 과제 (60분, AI 사용)
 
 > 2026-10-11 · 실습: `react-basics/src/day04/` · 요구사항과 회고: `react-basics/src/day04/README.md`
 
@@ -26,7 +26,7 @@
 
 ---
 
-## 설명 확인 질문 — 내 답과 보완
+## 설명 확인 질문 - 내 답과 보완
 
 ### 1. `keepPreviousData`를 쓸 때 유형을 바꾸면?
 - **내 답:** `isPending`은 false, `isPlaceholderData`는 true.
@@ -47,7 +47,7 @@
   - `elapsed`만 반환하면 ①에서 로딩 문구가 한 번 더 그려진다.
   - `active && elapsed`로 반환하면 ①에서 바로 false가 된다.
   - **Day 2와 같은 원리다.** effect는 렌더링 후에 실행되므로 그 사이의 렌더링은 이전 state를 본다.
-- 실험: `react-basics/src/day04/experiments/DelayedFlagLog.tsx` — 콘솔에서 render / effect / cleanup 순서와 빨간 줄(①)을 확인한다.
+- 실험: `react-basics/src/day04/experiments/DelayedFlagLog.tsx` - 콘솔에서 render / effect / cleanup 순서와 빨간 줄(①)을 확인한다.
 
 #### 한 번의 state 변경이 처리되는 순서
 ```
@@ -105,7 +105,7 @@ setState
 ```ts
 const a = [3, 1, 2]
 const b = a.sort()   // a 자체가 [1, 2, 3]으로 바뀜
-b === a              // true — 같은 배열
+b === a              // true - 같은 배열
 ```
 
 #### 지금 코드는 왜 안전한가
@@ -134,7 +134,7 @@ API 응답(캐시)        [A(50), B(30), C(70)]
 - 원래 순서를 기억하는 복사본이 어디에도 없으니 되돌릴 기준이 없다.
 - 더 나쁜 점: refetch(창 포커스, invalidate)로 캐시가 새 배열로 바뀌면 그때는 원래 순서로 돌아온다. **재현될 때도 있고 안 될 때도 있는 버그**가 된다.
 
-#### 그럼 복사본을 쓰면 기본순이 왜 동작하나 — 참조를 유지해서가 아니다
+#### 그럼 복사본을 쓰면 기본순이 왜 동작하나 - 참조를 유지해서가 아니다
 참조는 **끊기는 게 맞고, 끊겨야 동작한다.** 핵심은 "원본은 건드리지 않고, 매 렌더링 원본에서 다시 계산한다"이다.
 ```
 렌더링 1 (월세순)  캐시 [A, B, C] ─filter→ 복사본 [A, B, C] ─sort→ [B, A, C]  → 화면

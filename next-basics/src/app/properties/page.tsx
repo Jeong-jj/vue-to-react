@@ -1,19 +1,17 @@
 import { fetchProperties } from "@/lib/api";
-import { Category, CATEGORY_LABEL, Property } from "@/lib/types";
+import { type Category, CATEGORY_LABEL } from "@/lib/types";
 import Link from "next/link";
 
-export default async function Page({
-  searchParams,
-}: {
-  searchParams: Promise<{ [key: string]: Category }>;
-}) {
-  const searchValue = (await searchParams).category;
-  const category =
-    typeof searchValue === "string" && searchValue in CATEGORY_LABEL
-      ? searchValue
-      : "all";
+// URL 값은 무엇이든 들어올 수 있으므로 string | string[] | undefined로 받고 직접 좁힌다
+function isCategory(value: unknown): value is Category {
+  return typeof value === "string" && value in CATEGORY_LABEL;
+}
 
-  const properties: Property[] = await fetchProperties(category);
+export default async function Page({ searchParams }: PageProps<"/properties">) {
+  const { category: value } = await searchParams;
+  const category = isCategory(value) ? value : "all";
+
+  const properties = await fetchProperties(category);
 
   return (
     <>

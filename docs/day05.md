@@ -99,6 +99,31 @@
 - 표시하면: 바깥(헤더, fallback)은 build 때 미리 만들고, Suspense 안쪽만 요청 때 채운다 → build 결과의 `◐ Partial Prerender`.
 - 해결 방법: `loading.tsx`(폴더 단위) 또는 page 안에서 `<Suspense>`를 직접 감싼다. 데이터를 캐시해도 되면 `"use cache"`.
 
+### 특수 파일은 컴포넌트 트리로 바뀐다
+`<Suspense>`를 직접 쓴 적이 없어도, Next는 한 폴더의 특수 파일을 이렇게 겹쳐 감싼다.
+```tsx
+<Layout>                                       // layout.tsx
+  <ErrorBoundary fallback={<Error />}>         // error.tsx
+    <Suspense fallback={<Loading />}>          // loading.tsx
+      <NotFoundBoundary fallback={<NotFound />}>  // not-found.tsx
+        <Page />                               // page.tsx
+```
+- `loading.tsx`를 만든 것 = `<Suspense>`를 쓴 것. Cache Components의 요구를 이 파일로 채웠다.
+- 확인: `loading.tsx`를 잠깐 지우고 `pnpm build` → "uncached or runtime data during prerendering" 에러.
+- 이 구조 때문에 `error.tsx`는 같은 폴더의 `layout.tsx` 에러를 못 잡는다 (layout이 바깥에 있음).
+
+### 에러 바운더리가 브라우저에 있어야 하는 이유 (구체적으로)
+에러 바운더리는 "에러가 났다"는 **state**를 들고, 에러가 나면 **다시 렌더링**해서 대체 화면으로 바꾸는 컴포넌트다. Server Component는 state도 다시 렌더링도 없으므로 이 역할을 할 수 없다.
+
+서버 page에서 throw했을 때의 흐름:
+1. 서버: `Page`를 실행하다 throw → 서버는 그 자리에 "여기서 에러 남(digest)"이라는 표시를 담아 보낸다.
+2. 브라우저: React가 트리를 만들다 그 자리에서 에러를 다시 던진다 → 바깥의 `ErrorBoundary`(Client)가 잡아 `error` state에 저장 → `error.tsx`를 그린다.
+3. "다시 시도" 클릭 → `retry()`: 서버에 그 구간을 다시 요청 → 성공하면 state를 비우고 `Page`를 그린다.
+
+- `error.tsx`는 이 Client 바운더리가 그리고, `retry` **함수**를 props로 받는다. 함수는 브라우저에서 만들어진 것이라 서버 컴포넌트가 받을 수 없다 → `"use client"` 필수.
+- Client Component 안의 에러(클릭 → state 변경 → 렌더링 중 throw)는 처음부터 브라우저에서만 난다. 이것도 같은 바운더리가 잡는다.
+- Vue로 치면 부모 컴포넌트에서 `onErrorCaptured`로 잡아 `hasError` ref를 true로 바꾸고 `v-if`로 대체 화면을 그리는 것과 같다. 그 ref와 다시 그리기가 브라우저에 있어야 하는 것.
+
 ---
 
 ## 복습 질문 - 내 답과 보완

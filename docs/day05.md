@@ -124,6 +124,42 @@
 - Client Component 안의 에러(클릭 → state 변경 → 렌더링 중 throw)는 처음부터 브라우저에서만 난다. 이것도 같은 바운더리가 잡는다.
 - Vue로 치면 부모 컴포넌트에서 `onErrorCaptured`로 잡아 `hasError` ref를 true로 바꾸고 `v-if`로 대체 화면을 그리는 것과 같다. 그 ref와 다시 그리기가 브라우저에 있어야 하는 것.
 
+```vue
+<!-- Vue: 직접 만든 에러 바운더리 -->
+<script setup lang="ts">
+import { onErrorCaptured, ref } from 'vue'
+
+const error = ref<Error | null>(null)          // "에러 났음" state
+
+onErrorCaptured((e) => {
+  error.value = e as Error                     // 자식 에러를 잡아 state에 저장 → 다시 렌더링
+  return false                                 // 더 위로 전파하지 않음
+})
+
+const retry = () => (error.value = null)       // state를 비우면 자식을 다시 그림
+</script>
+
+<template>
+  <div v-if="error">
+    <p>목록을 불러오지 못했습니다.</p>
+    <button type="button" @click="retry">다시 시도</button>
+  </div>
+  <slot v-else />
+</template>
+```
+```tsx
+// Next: 위 바운더리는 Next가 만들어 주고, 대체 화면만 error.tsx로 받는다
+"use client";
+export default function Error({ error, retry }: { error: Error; retry: () => void }) {
+  return (
+    <div>
+      <p>목록을 불러오지 못했습니다.</p>
+      <button type="button" onClick={retry}>다시 시도</button>
+    </div>
+  );
+}
+```
+
 ---
 
 ## 복습 질문 - 내 답과 보완
@@ -150,12 +186,149 @@
 - **내 답:** 브라우저에 안 찍혔다. 서버 사이드라서?
 - ✅ 맞다. Server Component는 서버(Node)에서 실행되므로 **`pnpm dev`를 실행한 터미널**에 찍힌다. 브라우저에서는 그 코드가 실행되지 않는다.
 - 개발 모드의 Next는 서버 로그를 브라우저 콘솔에 `Server` 표시를 붙여 다시 보여주기도 한다. 이것은 개발 편의 기능이고, 실제 실행 위치는 서버다.
+- 처음에 터미널에도 안 보였던 이유: `react-basics`(Vite, 5173)에서 `pnpm dev`를 실행했다. Next는 `next-basics`(3000)에서 실행해야 한다.
 
 ### 5. `error.tsx`에만 `"use client"`가 필요한 이유
 - **내 답:** 에러는 서버에서 미리 준비할 수 없고 클라이언트에서 상황에 맞춰 렌더링하기 위해.
 - **보완:** 반은 맞다.
   - **상호작용:** "다시 시도" 버튼의 `onClick`이 필요하다. Server Component는 브라우저로 함수를 보낼 수 없다 (1차 커밋의 `onClick={load}` 에러가 이것).
   - **에러 바운더리는 브라우저에서 동작한다:** 에러는 화면 이동 중이나 Client Component 안에서도 난다. 그걸 잡아 대체 화면으로 바꾸는 장치가 브라우저에 있어야 한다.
+
+---
+
+## 추가 Q&A
+
+### loading / error / not-found는 페이지마다 필수인가?
+아니다. **그 폴더와 하위 전체에 적용되는 경계**이고, 가장 가까운 상위 파일이 쓰인다.
+```
+app/
+├── not-found.tsx          ← 모든 URL
+└── properties/
+    ├── loading.tsx        ← /properties, /properties/[id] 둘 다
+    ├── error.tsx          ← /properties, /properties/[id] 둘 다
+    └── [id]/
+        ├── not-found.tsx  ← 상세에서만 더 구체적인 문구가 필요할 때
+        └── page.tsx
+```
+| 상위에도 없으면 | 결과 |
+|---|---|
+| `loading.tsx` | 새 page가 준비될 때까지 이전 화면 유지. 단 Cache Components에서는 build 실패 → 사실상 필요 (page 안 `<Suspense>`로 대신 가능) |
+| `error.tsx` | Next 기본 에러 화면 (개발: 오버레이, 배포: "Application error") |
+| `not-found.tsx` | Next 기본 404 |
+
+- Vue로 치면 트리 중간에 `<Suspense>`나 에러 바운더리 컴포넌트를 한 번 감싸 두면 그 아래 전체에 적용되는 것. Next는 그 위치를 파일 위치로 정한다.
+- 과제 기본값: 루트에 `error.tsx` + `not-found.tsx`, 데이터를 불러오는 구간에 `loading.tsx`. 문구가 달라야 하는 곳에만 추가.
+
+### 404 화면은 어떻게 확인하나?
+없는 id로 직접 접속한다: `/properties/999`. (error 화면은 page에서 잠깐 `throw new Error('테스트')`)
+
+### metadata에는 무엇을 넣나?
+- 브라우저 탭 제목이다. Vue SPA에서는 `index.html`의 `<title>`에 있어서 이번 Vue 원본(`.vue` 파일)에는 대응값이 없었다. → 서비스명을 넣는다.
+```html
+<!-- Vue SPA: index.html -->
+<title>임대 매물 서비스</title>
+```
+```tsx
+// Next: layout.tsx (또는 page.tsx에서 페이지별로)
+export const metadata: Metadata = { title: "임대 매물 서비스" };
+```
+
+### Server Component 에러 메시지는 왜 가려지나? (보안)
+Server Component는 DB, 내부 API, 비밀 키에 접근한다. 에러 메시지에 DB 쿼리, 테이블 이름, 내부 주소, 파일 경로, 다른 사용자 데이터가 들어 있을 수 있다. 그대로 브라우저로 가면 누구나 개발자 도구로 본다. → 배포 환경에서는 일반 문구 + `digest`(서버 로그와 맞춰볼 식별자)만 보낸다. Client Component 에러는 이미 브라우저에서 난 것이라 그대로 보인다.
+
+### 서버는 왜 브라우저로 함수를 보낼 수 없나?
+서버와 브라우저는 **네트워크로 텍스트를 주고받는다.** Server Component의 결과도 JSON 비슷한 텍스트로 바뀌어 간다.
+- 데이터(문자열, 숫자, 배열, 객체)는 텍스트로 바꿨다가 다시 만들 수 있다.
+- 함수는 코드뿐 아니라 **만들어진 곳의 변수(클로저)**를 잡고 있다. 서버에서 만든 `load`는 서버 메모리의 `category`, DB 연결을 잡고 있어 텍스트로 옮길 수 없고, 옮긴다면 서버 코드와 비밀 값이 노출된다.
+```ts
+// Vue SPA에서 API 응답을 받을 때와 같은 원리
+JSON.stringify({ title: '역삼', load: () => fetch('/x') })
+// → '{"title":"역삼"}'   함수는 사라진다
+```
+```tsx
+// Next: Server → Client props
+<FavoriteButton id={property.id} />            // ✅ 숫자
+<FavoriteButton onToggle={() => save()} />     // ❌ 서버에서 만든 함수
+```
+- Client Component **안에서 만든** 핸들러는 괜찮다. 그 코드는 처음부터 브라우저용 JS에 들어 있다.
+- 예외: `"use server"` Server Action은 함수가 아니라 "서버의 이 함수를 실행해 줘"라는 식별자를 보낸다. 호출하면 네트워크 요청 → 서버에서 실행.
+
+### hydration mismatch 에러 (속성이 다름)
+```
+A tree hydrated but some attributes of the server rendered HTML didn't match the client properties.
+```
+- 원인: 브라우저 확장 프로그램(Grammarly, ColorZilla, 다크 모드 등)이 React 로드 전에 `<body>`에 `data-gr-ext-installed` 같은 속성을 붙여 서버 HTML과 달라졌다. 시크릿 창에서는 에러가 없어서 확인됨.
+- 에러 아래 `...`를 펼치면 `+`/`-`로 어떤 속성이 다른지 보인다. 낯선 `data-*`면 확장 프로그램.
+- 개발할 때 피하는 법:
+  1. 개발용 Chrome 프로필을 따로 만들고 React DevTools만 설치 (추천, 과제 당일에도)
+  2. 확장 프로그램의 "사이트 액세스"를 "클릭 시" 또는 특정 사이트로 제한
+  3. 무시 (개발 모드 경고, 동작에는 영향 없음)
+- `<body suppressHydrationWarning>`으로 숨길 수도 있지만 진짜 hydration 버그까지 가려질 수 있어 과제 코드에는 넣지 않는다.
+- 우리 코드가 원인인 경우는 렌더링 중에 서버와 브라우저에서 값이 다른 것을 쓸 때다: `typeof window` 분기, `Date.now()`, `Math.random()`, `localStorage` (Day 6).
+
+### 일반 React에서 Suspense는 언제 필요한가?
+일반 React에는 build가 Suspense를 강제하는 일은 없다. 컴포넌트가 **"아직 준비 안 됨"을 React에 알리는(suspend)** 경우에 필요하다.
+
+| React | 하는 일 | Vue로 치면 |
+|---|---|---|
+| `lazy(() => import('./Chart'))` | 그 컴포넌트 코드를 처음 필요할 때 내려받음 (코드 분할) | `defineAsyncComponent(() => import(...))`, router의 `component: () => import(...)` |
+| `use(promise)` (React 19) | 렌더링 중에 Promise 값을 읽음. 안 끝났으면 suspend | `<script setup>` 최상단 `await` |
+| `useSuspenseQuery` (TanStack) | `useQuery`와 같지만 `isPending` 대신 suspend | vue-query의 `suspense()` |
+
+- "Suspense용"이라도 어디서든 쓸 수 있다. **조상 어딘가에 `<Suspense>`가 하나 있으면** 된다 (바로 위 부모일 필요 없음). Next에서는 `loading.tsx`가 그 경계.
+- 경계가 끝까지 없으면 fallback 없이 그 구간 전체가 준비될 때까지 기다린다 (처음 화면이면 앱 전체가 빈 채로). 렌더링 방식에 따라 에러가 나기도 한다. (직접 실행해 확인하지는 못함)
+
+#### Vue의 async setup = `<script setup>` 최상단 `await` (Composition API)
+```vue
+<!-- PropertyDetail.vue -->
+<script setup lang="ts">
+const props = defineProps<{ id: number }>()
+const property = await fetchProperty(props.id)   // ← 최상단 await = async setup
+</script>
+
+<template>
+  <h1>{{ property.title }}</h1>   <!-- loading 분기 없음 -->
+</template>
+```
+```vue
+<!-- 부모 -->
+<Suspense>
+  <PropertyDetail :id="1" />
+  <template #fallback>불러오는 중...</template>
+</Suspense>
+```
+`<script setup>`은 `setup()` 함수의 축약 문법이다. 최상단에 `await`가 있는 컴포넌트는 부모에 `<Suspense>`가 필요하다.
+
+#### Suspense의 목적: 로딩 처리를 컴포넌트 밖으로 뺀다
+```tsx
+// useQuery: 컴포넌트가 로딩을 직접 처리
+function Detail() {
+  const { data, isPending } = useQuery(...)
+  if (isPending) return <p>불러오는 중...</p>
+  return <h1>{data.title}</h1>
+}
+
+// useSuspenseQuery: 컴포넌트는 "데이터가 있다"고 가정
+function Detail() {
+  const { data } = useSuspenseQuery(...)
+  return <h1>{data.title}</h1>
+}
+<Suspense fallback={<p>불러오는 중...</p>}>
+  <Detail />
+</Suspense>
+```
+- **Suspense : 로딩 = 에러 바운더리 : 에러.** 컴포넌트는 성공한 경우만 그리고, 나머지는 바깥 경계가 처리한다. Day 5에서 page는 `await`만 하고 `loading.tsx` / `error.tsx`가 나머지를 맡은 것과 같은 구조.
+- 장점: 분기 제거, 여러 컴포넌트의 로딩을 하나의 fallback으로 합침, 서버 렌더링에서 fallback을 먼저 보내고 나머지를 이어 보냄 (streaming).
+- 과제 기준으로는 `useQuery` + `isPending` 분기면 충분하다.
+
+#### "data가 항상 있다"
+```ts
+const { data } = useQuery(...)          // data: Property | undefined
+const { data } = useSuspenseQuery(...)  // data: Property
+```
+- `useQuery`: 로딩 중에도 렌더링된다 → 그 순간 `data`는 `undefined` → 확인 필요.
+- `useSuspenseQuery`: 데이터가 올 때까지 렌더링을 멈추고 바깥 `<Suspense>`가 fallback을 보여준다 → `return`까지 왔다면 데이터는 반드시 있다. 타입에서도 `undefined`가 빠진다.
+- Server Component의 `await`와 같은 원리: `const property = await fetchProperty(id)` 아래로 왔다면 `property`는 반드시 있다.
 
 ---
 
@@ -170,3 +343,5 @@
 - [ ] 없음은 `notFound()`, 실패는 throw
 - [ ] `params` / `searchParams`는 Promise
 - [ ] 버전별 API는 설치된 문서(`node_modules/next/dist/docs/`)로 확인
+- [ ] Server → Client props는 직렬화 가능한 값만 (함수 X)
+- [ ] 과제 당일은 확장 프로그램 없는 개발용 브라우저 프로필로

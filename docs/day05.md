@@ -44,6 +44,48 @@
 | 2차 | 상태 변수 제거, `loading.tsx` / `error.tsx` 분리, `params` await |
 | Feedback | `retry`, `notFound()`, `PageProps` + 타입 가드, metadata |
 
+### 1차에서 막힌 것: "state와 useEffect를 무엇으로 대체하지?"
+- 질문: async page 안에서 `useState`를 쓸 수 없어 `let` 변수로 바꿨지만 여전히 에러. ref를 무엇으로 대체해야 하나?
+- 답: **대체할 것이 필요 없다.** 질문을 "무엇으로 바꾸지?"에서 "이 상태가 애초에 필요한가?"로 바꾼다.
+
+| | Vue 컴포넌트 | Server Component |
+|---|---|---|
+| 수명 | 화면에 계속 살아 있음 | 요청마다 위에서 아래로 **한 번** 실행되고 끝남 |
+| 데이터 도착 전 | 렌더링됨 → `loading` ref 필요 | await에서 멈춤 → 끝났을 때는 이미 데이터가 있음 |
+| 조건 변경 | state 변경 → 다시 렌더링 → `watch` | URL 변경 → page를 처음부터 다시 실행 |
+
+```vue
+<!-- Vue: 컴포넌트가 상태 변화를 직접 들고 있다 -->
+<script setup lang="ts">
+const properties = ref<Property[]>([])
+const loading = ref(false)
+const error = ref<Error | null>(null)
+async function load() { /* loading → try/await/catch → finally */ }
+watch(category, load, { immediate: true })
+</script>
+```
+```tsx
+// Next: 데이터 한 줄. loading/error는 파일로
+export default async function Page({ searchParams }: PageProps<"/properties">) {
+  const { category: value } = await searchParams;
+  const properties = await fetchProperties(isCategory(value) ? value : "all");
+  return /* 빈 목록 분기 + 목록 */;
+}
+```
+
+1차 커밋의 각 에러 원인:
+- **`onClick={load}` 런타임 에러:** 서버에서 만든 함수는 브라우저로 보낼 수 없다 (아래 "추가 Q&A" 참고).
+- **`Page({ id })`에서 id가 undefined:** Next는 page에 `{ params, searchParams }`를 넘긴다. `Number(undefined)` → NaN → 항상 "찾을 수 없음".
+- **`Object.entries(...).map(([label, key])`:** entries는 `[key, label]` 순서. 화면에 `apartment`, 링크는 `?category=아파트`가 됐다.
+- **TS `Property 'title' does not exist on type 'never'`:**
+  ```ts
+  let property: Property | null = null;
+  async function load() { property = await fetchProperty(...); }   // 안쪽 함수에서 대입
+  await load();
+  property.title   // TS: 여전히 null로 판단 → null을 걸러낸 분기에서 never
+  ```
+  TS는 다른 함수 안에서 일어난 대입을 추적하지 않는다. 변수를 없애고 `const property = await fetchProperty(...)`로 쓰면 해결.
+
 ### Feedback에서 고친 것과 이유
 - **`reset` → `retry`** (Next 16.4): `reset`은 다시 요청하지 않고 다시 그리기만 한다. 서버 데이터 에러는 `retry`로 복구한다. (가이드에도 `reset`으로 잘못 썼다 → 버전별 API는 `node_modules/next/dist/docs/`의 설치된 문서로 확인)
 - **없는 매물: `error.tsx` → `notFound()`**
@@ -198,6 +240,16 @@ export default function Error({ error, retry }: { error: Error; retry: () => voi
 
 ## 추가 Q&A
 
+### next-basics는 왜 Vue 원본만 날짜별로 나뉘어 있나?
+- Next는 `src/app/`의 폴더 구조가 곧 URL이다. `src/app/day05/`를 만들면 URL이 `/day05/properties`가 된다 → react-basics처럼 날짜 폴더에 Vue와 React를 나란히 둘 수 없다.
+- 구현 코드는 `src/app/` 하나에 날짜가 지나도 쌓는다 (Day 6은 Day 5 page 위에서 Server/Client를 나눈다).
+- 날짜별 자료(가이드, Vue 원본)는 `dayNN/`, 날짜별 기록은 브랜치와 PR로 남는다.
+
+### Next를 처음 보는데 Day 5의 목표는?
+- App Router 익히기: 폴더 = URL 규칙, `layout`, `Link`, `params` / `searchParams`, `loading` / `error` / `not-found`.
+- Vue Router를 알면 라우팅은 대부분 1:1로 대응된다. 정말 새로운 것은 **page가 서버에서 실행되므로 `async`로 만들고 데이터를 바로 `await`한다** 하나.
+- 가이드는 `next-basics/day05/README.md`: 1번 대응표 → Vue 원본 훑기 → 2번 순서대로 구현 → 3번 실험 → 복습 질문.
+
 ### loading / error / not-found는 페이지마다 필수인가?
 아니다. **그 폴더와 하위 전체에 적용되는 경계**이고, 가장 가까운 상위 파일이 쓰인다.
 ```
@@ -329,6 +381,65 @@ const { data } = useSuspenseQuery(...)  // data: Property
 - `useQuery`: 로딩 중에도 렌더링된다 → 그 순간 `data`는 `undefined` → 확인 필요.
 - `useSuspenseQuery`: 데이터가 올 때까지 렌더링을 멈추고 바깥 `<Suspense>`가 fallback을 보여준다 → `return`까지 왔다면 데이터는 반드시 있다. 타입에서도 `undefined`가 빠진다.
 - Server Component의 `await`와 같은 원리: `const property = await fetchProperty(id)` 아래로 왔다면 `property`는 반드시 있다.
+
+### `lazy` 자세히
+컴포넌트 코드를 **처음 화면에 나올 때 내려받게** 한다 (코드 분할).
+```tsx
+// 일반 import: Chart 코드가 처음 받는 JS에 들어간다. 안 보여줘도 받는다
+import Chart from './Chart'
+
+// lazy: Chart를 별도 파일로 분리. <Chart />가 처음 렌더링될 때 내려받는다
+const Chart = lazy(() => import('./Chart'))
+
+function Dashboard({ open }: { open: boolean }) {
+  return (
+    <Suspense fallback={<p>차트 불러오는 중...</p>}>
+      {open && <Chart />}
+    </Suspense>
+  )
+}
+```
+- 내려받는 동안 `Chart`가 suspend → 위쪽 `<Suspense>` fallback.
+- **모듈 최상단**에 선언한다. 컴포넌트 안에 두면 렌더링마다 새로 만들어져 state가 초기화된다.
+- 가져오는 파일에 `export default`가 있어야 한다.
+- 쓰는 곳: 무거운 차트, 에디터, 모달처럼 처음부터 필요 없는 큰 컴포넌트.
+```ts
+// Vue: 같은 개념
+const Chart = defineAsyncComponent(() => import('./Chart.vue'))   // 로딩 화면은 loadingComponent 옵션
+{ path: 'properties', component: () => import('./pages/PropertyListPage.vue') }   // lazy route
+```
+- Next는 page가 URL별로 자동 분할되므로 직접 쓸 일이 드물다. 필요하면 `lazy`를 감싼 `next/dynamic`.
+
+### `use` 자세히 (React 19)
+렌더링 중에 **Promise(또는 Context)의 값을 읽는다.**
+```tsx
+function Detail({ propertyPromise }: { propertyPromise: Promise<Property> }) {
+  const property = use(propertyPromise)
+  return <h1>{property.title}</h1>
+}
+```
+| Promise 상태 | `use()` |
+|---|---|
+| 성공 | 값 반환 |
+| 진행 중 | suspend → 위쪽 `<Suspense>` fallback |
+| 실패 | throw → 위쪽 에러 바운더리 (`error.tsx`) |
+
+- **Promise를 렌더링 안에서 만들면 안 된다.** `use(fetchProperty(id))`는 렌더링마다 새 Promise → 끝없이 suspend. 바깥에서 한 번 만들어 넘긴다.
+  ```tsx
+  // Next: Server Component가 await하지 않고 Promise만 만들어 넘김
+  export default function Page() {
+    const propertyPromise = fetchProperty(1)
+    return (
+      <Suspense fallback={<p>불러오는 중...</p>}>
+        <Detail propertyPromise={propertyPromise} />   {/* Client Component에서 use() */}
+      </Suspense>
+    )
+  }
+  ```
+  page는 바로 응답을 시작하고, 데이터는 준비되는 대로 이어서 보낸다 (streaming).
+- 일반 훅과 달리 `if`나 반복문 안에서도 호출할 수 있다. `use(SomeContext)`는 `useContext`처럼 동작.
+- Vue로 치면 `<script setup>` 최상단 `await` + 부모 `<Suspense>`와 같은 역할.
+- 과제 기준: 몰라도 된다 (Server Component `await`나 `useQuery`로 충분). AI 코드에 `use()`나 `lazy()`가 보이면 위쪽에 `<Suspense>`가 있는지 확인.
 
 ---
 

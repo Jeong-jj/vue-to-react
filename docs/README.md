@@ -6,3 +6,4 @@
 | 2 | Props / Form / 컴포넌트 설계 / Hooks | [day02.md](./day02.md) |
 | 3 | React + TypeScript + TanStack Query | [day03.md](./day03.md) |
 | 4 | 미니 과제 (60분, AI 사용) | [day04.md](./day04.md) |
+| 5 | Next.js App Router | [day05.md](./day05.md) |
